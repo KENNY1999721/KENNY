@@ -1,0 +1,110 @@
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+// WiFi
+const char* ssid = "YOUR_WIFI_NAME";
+const char* password = "YOUR_WIFI_PASSWORD";
+
+// HC-SR04 Pins
+#define TRIG_PIN 5
+#define ECHO_PIN 18
+
+// Output Pins
+#define LED_PIN 2
+#define BUZZER_PIN 4
+
+String server =
+"http://YOUR_PC_IP/security_system/save_data.php";
+
+void setup()
+{
+  Serial.begin(115200);
+
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+
+  digitalWrite(LED_PIN, LOW);
+  digitalWrite(BUZZER_PIN, LOW);
+
+  WiFi.begin(ssid, password);
+
+  Serial.print("Connecting");
+
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println();
+  Serial.println("WiFi Connected");
+}
+
+void loop()
+{
+  float distance = getDistance();
+
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  String status;
+
+  if(distance <= 30)
+  {
+    digitalWrite(LED_PIN, HIGH);
+    digitalWrite(BUZZER_PIN, HIGH);
+
+    status = "active";
+  }
+  else
+  {
+    digitalWrite(LED_PIN, LOW);
+    digitalWrite(BUZZER_PIN, LOW);
+
+    status = "safe";
+  }
+
+  if(WiFi.status() == WL_CONNECTED)
+  {
+    HTTPClient http;
+
+    String url =
+    server +
+    "?distance=" + String(distance) +
+    "&status=" + status;
+
+    http.begin(url);
+
+    int httpCode = http.GET();
+
+    Serial.print("HTTP Code: ");
+    Serial.println(httpCode);
+
+    http.end();
+  }
+
+  delay(3000);
+}
+
+float getDistance()
+{
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+
+  digitalWrite(TRIG_PIN, LOW);
+
+  long duration =
+  pulseIn(ECHO_PIN, HIGH);
+
+  float distance =
+  duration * 0.034 / 2;
+
+  return distance;
+}
