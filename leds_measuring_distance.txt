@@ -1,0 +1,58 @@
+#define TRIG_PIN 9
+#define ECHO_PIN 10
+
+#define LED1 2
+#define LED2 3
+#define LED3 4
+
+void setup() {
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+
+  pinMode(LED1, OUTPUT);
+  pinMode(LED2, OUTPUT);
+  pinMode(LED3, OUTPUT);
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  long duration;
+  float distance;
+
+  // Send ultrasonic pulse
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+
+  digitalWrite(TRIG_PIN, LOW);
+
+  // Read echo
+  duration = pulseIn(ECHO_PIN, HIGH);
+
+  // Calculate distance in cm
+  distance = duration * 0.034 / 2;
+
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  // Turn off all LEDs first
+  digitalWrite(LED1, LOW);
+  digitalWrite(LED2, LOW);
+  digitalWrite(LED3, LOW);
+
+  if (distance <= 10) {
+    digitalWrite(LED1, HIGH);
+  }
+  else if (distance <= 20) {
+    digitalWrite(LED2, HIGH);
+  }
+  else if (distance <= 400) {  // 4 meters = 400 cm
+    digitalWrite(LED3, HIGH);
+  }
+
+  delay(100);
+}
